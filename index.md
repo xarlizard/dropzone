@@ -4,53 +4,43 @@ okf_version: "0.2"
 
 # Overview
 
-* [README](README.md) - Project overview, setup commands, supported file types, and directory layout.
+* [README](README.md) - Challenge notes, production stack summary, supported file types, project structure, and run instructions.
 
 # Source
 
 * [src](src/index.md) - Application source root.
 
-## App (client)
+## Worker API (`src/api-server`)
 
-* [App.jsx](src/App.jsx) - React client entry, app shell, and mount point.
-* [App.css](src/App.css) - Global client styles for the dropzone UI.
+* [index.md](src/api-server/index.md) - Hono Worker routes and upload processing.
+* [index.ts](src/api-server/index.ts) - App entry; mounts middleware, `/health`, and `/api`.
+* [middleware/index.ts](src/api-server/middleware/index.ts) - CORS and global error handling.
+* [routes/health.ts](src/api-server/routes/health.ts) - `GET /health`.
+* [routes/upload.ts](src/api-server/routes/upload.ts) - `POST /api/upload`.
+* [uploadHandler.ts](src/api-server/uploadHandler.ts) - Classify file, build preview, respond.
 
-## Server
+## React app (`src/app`)
 
-* [AppServer.ts](src/AppServer.ts) - Express server entry; serves the built client and mounts `/api`.
+* [index.md](src/app/index.md) - Client entry, layout, components, hooks, and client-only types.
+* [main.tsx](src/app/main.tsx) - Client bootstrap and theme/toast providers.
+* [App.tsx](src/app/App.tsx) - Page shell, upload flow, metadata dialog, and history.
+* [components/Dropzone.tsx](src/app/components/Dropzone.tsx) - Drag-and-drop upload zone.
+* [components/UploadMetadataDialog.tsx](src/app/components/UploadMetadataDialog.tsx) - Modal for metadata and ephemeral previews.
+* [components/UploadHistoryList.tsx](src/app/components/UploadHistoryList.tsx) - In-memory list of the latest 10 uploads.
+* [components/MetadataList.tsx](src/app/components/MetadataList.tsx) - Metadata definition list.
+* [layout/](src/app/layout/) - App header with theme toggle and API health indicator.
 
-## API
+## Shared
 
-* [api](src/api/index.md) - Upload route, handler, and browser fetch client.
-* [uploadRoute.ts](src/api/uploadRoute.ts) - Express router; wires `POST /upload` with multer.
-* [uploadHandler.ts](src/api/uploadHandler.ts) - Classifies files, builds previews, returns JSON.
-* [uploadClient.ts](src/api/uploadClient.ts) - Browser `fetch` helper for `/api/upload`.
-
-## Components
-
-* [components](src/components/index.md) - React UI layer.
-* [Dropzone.jsx](src/components/Dropzone.jsx) - Drag-and-drop zone, file picker, and upload state.
-* [UploadResult.jsx](src/components/UploadResult.jsx) - Loading, error, metadata, and preview display.
-* [MetadataList.jsx](src/components/MetadataList.jsx) - Definition list for file metadata fields.
-
-## Types
-
-* [types](src/types/index.md) - Shared TypeScript contracts.
-* [upload.ts](src/types/upload.ts) - `FileKind`, `UploadResponse`, and `UploadErrorResponse`.
-
-## Utils
-
-* [utils](src/utils/index.md) - Shared and server-side helpers.
-* [constants.ts](src/utils/constants.ts) - MIME type sets and snippet length.
-* [extension.ts](src/utils/extension.ts) - Filename extension helper.
-* [fileClassifier.ts](src/utils/fileClassifier.ts) - Detects file kind from buffer and declared type.
-* [formatBytes.ts](src/utils/formatBytes.ts) - Human-readable byte formatter (client + server).
-* [formatKind.ts](src/utils/formatKind.ts) - Maps `FileKind` values to display labels.
-* [imagePreview.ts](src/utils/imagePreview.ts) - Sharp thumbnail generation and image metadata.
-* [textPreview.ts](src/utils/textPreview.ts) - Text snippet extraction and line/character counts.
+* [types/index.md](src/types/index.md) - Shared API contracts and Worker env types.
+* [types/upload.ts](src/types/upload.ts) - `UploadResponse`, `FileKind`, and upload error shape.
+* [utils/index.md](src/utils/index.md) - Classifier, previews, formatters used by Worker and UI.
 
 # Configuration
 
-* [package.json](package.json) - Dependencies and npm scripts.
-* [vite.config.js](vite.config.js) - Vite build output and dev-server API proxy.
-* [tsconfig.json](tsconfig.json) - TypeScript compiler options for server-side code.
+* [package.json](package.json) - Dependencies and scripts.
+* [vite.config.ts](vite.config.ts) - React + Cloudflare Vite plugin and path aliases.
+* [wrangler.toml](wrangler.toml) - Worker entry, SPA assets, and route rules.
+* [tsconfig.json](tsconfig.json) - TypeScript paths (`@/`, `@shared/*`, `@api-server/*`).
+* [components.json](components.json) - shadcn/ui configuration.
+* [.gitignore](.gitignore) - Ignored build output, Wrangler state, secrets, and local caches.

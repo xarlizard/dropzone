@@ -1,10 +1,10 @@
-import type { UploadResponse } from '../types/upload.js';
-import { TEXT_SNIPPET_LENGTH } from './constants.js';
+import type { UploadResponse } from "@shared/types/upload";
+import { TEXT_SNIPPET_LENGTH } from "./constants";
 
 export function buildTextPreview(
-  buffer: Buffer,
-): Pick<UploadResponse, 'metadata' | 'preview'> {
-  const text = buffer.toString('utf8');
+  buffer: Uint8Array,
+): Pick<UploadResponse, "metadata" | "preview"> {
+  const text = new TextDecoder("utf-8").decode(buffer);
   const lines = text.split(/\r?\n/).length;
 
   return {

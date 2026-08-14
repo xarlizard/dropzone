@@ -1,6 +1,7 @@
-import path from 'node:path';
-
 export function extensionFromName(filename: string): string | null {
-  const ext = path.extname(filename).slice(1).toLowerCase();
-  return ext || null;
+  const lastDot = filename.lastIndexOf(".");
+  if (lastDot <= 0) {
+    return null;
+  }
+  return filename.slice(lastDot + 1).toLowerCase();
 }

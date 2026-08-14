@@ -1,4 +1,4 @@
-# Dropzone 
+# Dropzone
 
 ## Challenge
 
@@ -17,6 +17,16 @@ It displays metadata for all file types, and for supported we render a preview (
 Futureproofing this project would require to add to the main try/catch for the upload process a way for detecting broken images, currently `"myimage.png"` metadata seems corrupted/broken.
 
 More QA and failsafes are required, and custom messages for UX like "This image is broken" or similar.
+
+# Production Ready comments
+
+The project has moved from the original Express + plain JSX setup into a production-oriented stack:
+
+- **React (TypeScript)** — the client lives under `src/app/` as a Vite-built SPA with typed components, hooks, and Tailwind/shadcn-style UI. Upload results open in a modal; metadata for the latest 10 uploads is kept in memory (previews are ephemeral and never stored).
+- **Hono on Cloudflare Workers** — the API lives under `src/api-server/` as a Hono app deployed as a Worker. Routes cover `GET /health` and `POST /api/upload`. Wrangler serves the built SPA as static assets while API paths run on the Worker first.
+- **Shared TypeScript types** — `src/types/` defines contracts such as `UploadResponse` and `FileKind`, imported by both the React app (`@shared/types/*`) and the Worker (`@shared/types/*`) so the upload response shape stays in sync.
+- **Shared utilities** — `src/utils/` holds file classification, preview generation, and formatters used by the Worker upload handler and, where relevant, the React UI (`@shared/utils/*`). Image previews use `@jsquash` WASM codecs instead of Node-only libraries, so the same logic runs in the Worker runtime.
+- **Single toolchain** — Vite + `@cloudflare/vite-plugin` handles local dev, client build, and Worker bundling. Path aliases in `vite.config.ts` and `tsconfig.json` wire `@/`, `@shared/*`, and `@api-server/*` together.
 
 # PROJECT STANDARD README following @open/templates structure (my personal strucure)
 
@@ -39,32 +49,50 @@ Unsupported types return a `415` response with a clear error message.
 dropzone/
 ├── index.html              # Vite HTML shell
 ├── index.md                # OKF bundle root (progressive disclosure)
-├── vite.config.js          # Client build + dev proxy to /api
+├── vite.config.ts          # React client + Cloudflare Worker (Hono) build
+├── wrangler.toml           # Worker entry, SPA assets, route rules
+├── tsconfig.json           # App/worker TypeScript + path aliases
+├── tsconfig.node.json      # Vite config TypeScript
+├── components.json         # shadcn/ui configuration
+├── postcss.config.js       # Tailwind PostCSS setup
 ├── src/
-│   ├── App.jsx             # React client entry
-│   ├── App.css             # Client styles
-│   ├── AppServer.ts        # Express server entry
-│   ├── api/
-│   │   ├── uploadClient.ts # Browser upload fetch helper
-│   │   ├── uploadHandler.ts# Upload processing logic
-│   │   └── uploadRoute.ts  # Express route wiring
-│   ├── components/
-│   │   ├── Dropzone.jsx    # Drag-and-drop zone + file picker
-│   │   ├── MetadataList.jsx# Metadata definition list
-│   │   └── UploadResult.jsx# Result / error / loading display
-│   ├── types/
-│   │   └── upload.ts       # Shared UploadResponse and FileKind types
-│   └── utils/
-│       ├── constants.ts    # MIME sets and snippet length
-│       ├── extension.ts    # Filename extension helper
+│   ├── api-server/         # Hono API (Cloudflare Worker)
+│   │   ├── index.ts        # App entry, middleware, route mounting
+│   │   ├── middleware/     # CORS, error handling
+│   │   ├── routes/
+│   │   │   ├── health.ts   # GET /health
+│   │   │   └── upload.ts   # POST /api/upload
+│   │   └── uploadHandler.ts# Classify file, build preview, respond
+│   ├── app/                # React SPA (TypeScript)
+│   │   ├── main.tsx        # Client entry
+│   │   ├── App.tsx         # Page layout, upload flow, history
+│   │   ├── api/
+│   │   │   ├── health.ts   # Client health helper
+│   │   │   └── uploadClient.ts # Browser upload fetch helper
+│   │   ├── components/
+│   │   │   ├── Dropzone.tsx
+│   │   │   ├── MetadataList.tsx
+│   │   │   ├── UploadMetadataDialog.tsx
+│   │   │   ├── UploadHistoryList.tsx
+│   │   │   └── ui/         # Shared UI primitives (button, card, …)
+│   │   ├── hooks/          # API health, upload history
+│   │   ├── layout/         # App header and shell
+│   │   ├── lib/            # Client-only helpers
+│   │   ├── styles/         # Global CSS (Tailwind)
+│   │   └── types/          # Client-only UI types
+│   ├── types/              # Shared types (client + worker)
+│   │   └── upload.ts       # UploadResponse, FileKind, error shape
+│   └── utils/              # Shared utilities (client + worker)
 │       ├── fileClassifier.ts
-│       ├── formatBytes.ts  # Shared byte formatter (client + server)
+│       ├── imagePreview.ts # Thumbnail via @jsquash (Worker-safe)
+│       ├── imageCodecs.ts  # WASM codec init for PNG/JPEG
+│       ├── textPreview.ts
+│       ├── formatBytes.ts
 │       ├── formatKind.ts
-│       ├── imagePreview.ts # Sharp thumbnail generation
-│       └── textPreview.ts  # Text snippet extraction
+│       └── supportedFormats.ts
 └── dist/                   # Build output (gitignored)
-    ├── AppServer.js        # Compiled server
-    └── client/             # Vite-built React app
+    ├── client/             # Vite-built React SPA
+    └── dropzone/           # Worker bundle + WASM assets
 ```
 
 ## Getting started
@@ -77,7 +105,7 @@ npm install
 
 ### Development
 
-Runs the API server on port `3000` and the Vite dev server on port `5173` (with `/api` proxied to the server).
+Runs Vite with the Cloudflare plugin: React SPA and Hono Worker API together on one dev server.
 
 ```bash
 npm run dev
@@ -89,13 +117,23 @@ Open **http://localhost:5173**.
 
 ```bash
 npm run build
-npm start
+npm run preview   # local preview of the production build
 ```
 
-Open **http://localhost:3000**.
+### Deploy
+
+```bash
+npm run deploy    # build + wrangler deploy
+```
+
+### Typecheck
+
+```bash
+npm run typecheck
+```
 
 ## Architecture
 
-- **Client** (`App.jsx`) — React app built with Vite. Components handle drag-and-drop, rendering, and call `uploadClient.ts` to POST files to `/api/upload`.
-- **Server** (`AppServer.ts`) — Express serves the built client from `dist/client` and mounts the upload API. Processing logic lives in `api/` and `utils/`.
-- **Shared types** — `types/upload.ts` defines the upload response contract used by both sides.
+- **Client** (`src/app/`) — React + TypeScript SPA built with Vite and Tailwind. The dropzone POSTs files to `/api/upload`; successful uploads open a metadata/preview dialog. Metadata for the last 10 uploads is kept in memory; previews exist only until the dialog is closed.
+- **Worker API** (`src/api-server/`) — Hono app compiled for Cloudflare Workers. Handles health checks and upload processing. Static assets from the React build are served via Wrangler `[assets]`, with `/api/*` and `/health` routed to the Worker first.
+- **Shared layer** (`src/types/`, `src/utils/`) — Types and processing logic shared across client and Worker through `@shared/types/*` and `@shared/utils/*` aliases, keeping the upload contract and file handling consistent on both sides.

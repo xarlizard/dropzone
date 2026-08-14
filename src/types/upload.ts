@@ -1,4 +1,4 @@
-export type FileKind = 'text' | 'image' | 'pdf' | 'zip' | 'unsupported';
+export type FileKind = "text" | "image" | "pdf" | "zip" | "unsupported";
 
 export type UploadResponse = {
   name: string;

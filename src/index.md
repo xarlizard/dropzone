@@ -1,24 +1,18 @@
-# App (client)
+# Source layout
 
-* [App.jsx](App.jsx) - React client entry, app shell, and mount point.
-* [App.css](App.css) - Global client styles for the dropzone UI.
+```text
+src/
+├── api-server/   # Hono Worker (health + upload)
+├── app/          # React SPA (dropzone UI, history, dialogs)
+├── types/        # Shared API contracts
+└── utils/        # Shared file processing helpers
+```
 
-# Server
+# Navigation
 
-* [AppServer.ts](AppServer.ts) - Express server entry; serves the built client and mounts `/api`.
+* [api-server/index.md](api-server/index.md) - Worker API routes and upload handler.
+* [app/index.md](app/index.md) - React client app.
+* [types/index.md](types/index.md) - Shared TypeScript types.
+* [utils/index.md](utils/index.md) - Shared utilities for classification and previews.
 
-# API
-
-* [api](api/index.md) - Upload route, handler, and browser fetch client.
-
-# Components
-
-* [components](components/index.md) - React UI for drag-and-drop and result display.
-
-# Types
-
-* [types](types/index.md) - Shared TypeScript types for upload responses.
-
-# Utils
-
-* [utils](utils/index.md) - File classification, preview builders, and formatters.
+See [index.md](../index.md) at the repo root for full navigation.

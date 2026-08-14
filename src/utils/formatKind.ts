@@ -1,10 +1,10 @@
-import type { FileKind } from '../types/upload.js';
+import type { FileKind } from "@shared/types/upload";
 
-const KIND_LABELS: Record<Exclude<FileKind, 'unsupported'>, string> = {
-  text: 'Text',
-  image: 'Image',
-  pdf: 'PDF',
-  zip: 'ZIP',
+const KIND_LABELS: Record<Exclude<FileKind, "unsupported">, string> = {
+  text: "Text",
+  image: "Image",
+  pdf: "PDF",
+  zip: "ZIP",
 };
 
 export function formatKind(kind: FileKind): string {
